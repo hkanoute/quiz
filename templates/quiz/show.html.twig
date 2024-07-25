@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="container">
+        <div class="col-md-5">
+            <h1>Quiz : {{ quiz.title }}</h1>
+            <h1> Questions :  </h1>
+           {% for question in quiz.questions %}
+                <p>Question posé : {{ question.content }}</p>
+                <p>type de question : {{ question.type }}</p>
+                <ul>
+                    {% for answer in question.answers %}
+                        <li>Bonne réponse {{ answer.content }}</li>
+                    {% endfor %}
+                </ul>
+               <ul>
+                   {% for FalseAnswer in question.falseAnswers %}
+                       <li>Fausse réponse proposé {{ FalseAnswer.content }}</li>
+                   {% endfor %}
+               </ul>
+            {% endfor %}
+        </div>
+{% endblock %}

@@ -16,6 +16,13 @@ return [
         'path' => './assets/app.js',
         'entrypoint' => true,
     ],
+    '@a2lix/symfony-collection/dist/a2lix_sf_collection.min' => [
+        'version' => '0.6.1',
+    ],
+    'bootstrap/dist/css/bootstrap.min.css' => [
+        'version' => '5.3.3',
+        'type' => 'css',
+    ],
     '@hotwired/stimulus' => [
         'version' => '3.2.2',
     ],

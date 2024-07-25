@@ -1,3 +1,18 @@
-body {
-    background-color: skyblue;
+html {
+    min-height: 100%;
+}
+
+main {
+    padding: 80px 0 40px;
+}
+
+fieldset > div {
+    border-left: 4px solid #e9ecef;
+    padding-left: 8px;
+}
+
+div[data-prototype] > div {
+    border-left: 4px solid #b7c2ce;
+    margin-bottom: 10px;
+    padding-left: 8px;
 }
