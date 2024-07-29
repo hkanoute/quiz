@@ -20,7 +20,6 @@ class QuestionType extends AbstractType
             ->add('content',TextareaType::class, [
                 'label' => 'Question',
                 'attr' => ['class' => 'form-control mb-3'],
-                "empty_data" => "",
             ])
             ->add('type', ChoiceType::class, [
                 'choices' => [

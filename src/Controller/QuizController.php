@@ -2,11 +2,14 @@
 
 namespace App\Controller;
 
-use App\Entity\Answer;
-use App\Entity\FalseAnswer;
-use App\Entity\Question;
 use App\Entity\Quiz;
+use App\Entity\QuizAttempt;
+use App\Entity\User;
+use App\Entity\UserAnswer;
+use App\Form\QuizPlayType;
 use App\Form\QuizType;
+use App\Repository\QuizAttemptRepository;
+use App\Repository\UserAnswerRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,7 +20,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class QuizController extends AbstractController
 {
 
-    public function __construct(private readonly EntityManagerInterface $em, )
+    public function __construct(private readonly EntityManagerInterface $em,)
     {
     }
 
@@ -101,6 +104,101 @@ class QuizController extends AbstractController
         ]);
     }
 
+    #[Route("/quiz/{id}/play", name: 'app_quiz_play')]
+    public function play(Quiz $quiz, Request $request): Response
+    {
+        $form = $this->createForm(QuizPlayType::class, $quiz, ['questions' => $quiz->getQuestions()]);
+        $form->handleRequest($request);
 
+        if ($form->isSubmitted() && $form->isValid()) {
+            $user = $this->em->getRepository(User::class)->find(1);
+            $quizAttempt = new QuizAttempt();
+            $quizAttempt->setUser($user);
+            $quizAttempt->setQuiz($quiz);
+            $quizAttempt->setAttemptedAt(new \DateTime());
+
+            $this->em->persist($quizAttempt);
+
+            $data = $form->getData();
+            foreach ($data->getQuestions() as $question) {
+                $embeddedForm = $form->get($question->getId());
+                $data = $embeddedForm->all();
+                $nbOfAnswers = count($data);
+                $answerArray = [];
+                switch ($question->getType()) {
+                    case 'short':
+                        $answerArray[] = $data['answer']->getData();
+                        break;
+                    case 'multiple':
+                        for ($i = 0; $i < $nbOfAnswers; $i++) {
+                            $answerArray[] = $data['answers_' . $i]->getData();
+                        }
+                        break;
+                    case 'qcm':
+                        $answerArray = $data['answers']->getData();
+                        break;
+                }
+                $userAnswer = new UserAnswer();
+                $userAnswer->setQuizAttempt($quizAttempt);
+                $userAnswer->setQuestion($question);
+                $userAnswer->setAnswer($answerArray);
+
+
+                $this->em->persist($userAnswer);
+            }
+
+            $this->em->flush();
+
+            return $this->redirectToRoute('quiz_result', ['id' => $quiz->getId()]);
+        }
+
+        return $this->render('quiz/play.html.twig', [
+            'quiz' => $quiz,
+            'form' => $form->createView(),
+        ]);
+    }
+
+
+    #[Route("/quiz/{id}/result", name: 'quiz_result')]
+    public function result(Quiz $quiz, QuizAttemptRepository $quizAttemptRepository, UserAnswerRepository $userAnswerRepository): Response
+    {
+        $user = $this->em->getRepository(User::class)->find(1);
+        $quizAttempt = $quizAttemptRepository->findOneBy(['quiz' => $quiz, 'user' => $user], ['attemptedAt' => 'DESC']);
+        $userAnswers = $userAnswerRepository->findBy(['quizAttempt' => $quizAttempt]);
+        $score = 0;
+
+        foreach ($userAnswers as $userAnswer) {
+            $question = $userAnswer->getQuestion();
+            $answers = array_map('strtolower', $userAnswer->getAnswer());
+            $answers= array_unique($answers);
+            $correctAnswers = array_map('strtolower', $question->getAnswers()->map(fn($answer) => $answer->getContent())->toArray());
+
+            if ($question->getType() === 'short') {
+                if ($answers[0] === $correctAnswers[0]) {
+                    $score += 50;
+                }
+            } else {
+                if (count($answers) === count($correctAnswers) && count(array_diff($answers, $correctAnswers)) === 0) {
+                    $score += 50;
+                }elseif (count($answers) <= count($correctAnswers)){
+                    foreach ($answers as $answer) {
+                        if (in_array($answer, $correctAnswers)) {
+                            $score += ceil(50 / count($correctAnswers));
+
+                        }
+                    }
+                }
+            }
+        }
+
+        $quizAttempt->setScore($score);
+
+
+        return $this->render('quiz/result.html.twig', [
+            'quiz' => $quiz,
+            'score' => $score,
+            'total' => count($quiz->getQuestions()),
+        ]);
+    }
 
 }
