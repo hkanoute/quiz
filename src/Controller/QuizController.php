@@ -33,11 +33,10 @@ class QuizController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-
             $this->em->persist($quiz);
             $this->em->flush();
 
-            return $this->redirectToRoute('app_quiz');
+            return $this->redirectToRoute('app_quiz_show', ['id' => $quiz->getId()]);
         }
 
         return $this->render('quiz/index.html.twig', [
@@ -92,6 +91,7 @@ class QuizController extends AbstractController
                     }
                 }
             }
+
             $this->em->persist($quiz);
             $this->em->flush();
 
@@ -191,13 +191,26 @@ class QuizController extends AbstractController
             }
         }
 
+
+        $answers = [];
+        foreach ($userAnswers as $userAnswer) {
+            $question = $userAnswer->getQuestion();
+            $answers[] = [
+                'question' => $question,
+                'userAnswer' => $userAnswer->getAnswer(),
+                'correctAnswer' => $question->getAnswers()->map(fn($answer) => $answer->getContent())->toArray(),
+            ];
+        }
+
         $quizAttempt->setScore($score);
+        $this->em->persist($quizAttempt);
+        $this->em->flush();
 
 
         return $this->render('quiz/result.html.twig', [
             'quiz' => $quiz,
-            'score' => $score,
-            'total' => count($quiz->getQuestions()),
+            'QuizAttemptData' => $answers,
+            'quizAttempt' => $quizAttempt,
         ]);
     }
 

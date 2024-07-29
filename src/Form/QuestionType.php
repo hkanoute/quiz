@@ -37,6 +37,11 @@ class QuestionType extends AbstractType
                 'allow_add' => true,
                 'allow_delete' => true,
                 'by_reference' => false,
+                'prototype_name' => '__answers_name__',
+                'attr' => [
+                    'data-prototype-name' => '__answers_name__',
+                    'data-entry-add-label' => 'Add Answer',
+                ]
             ])
             ->add('falseAnswers', CollectionType::class, [
                 'entry_type' => FalseAnswerType::class,
@@ -44,6 +49,11 @@ class QuestionType extends AbstractType
                 'allow_add' => true,
                 'allow_delete' => true,
                 'by_reference' => false,
+                'prototype_name' => '__false_answers_name__',
+                'attr' => [
+                    'data-prototype-name' => '__false_answers_name__',
+                    'data-entry-add-label' => 'Add a false Answer',
+                ]
             ])
 
         ;

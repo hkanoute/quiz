@@ -4,5 +4,25 @@
 
 {% block body %}
     <h1>Quiz Result</h1>
-    <p>You scored {{ score }}</p>
+    <p>You scored {{ quizAttempt.score }}</p>
+    <p>Voici le corrigé du quiz</p>
+    <ul>
+        {% for data in QuizAttemptData %}
+            <li>{{ data.question.content }}</li>
+            votre réponse:
+            <ul>
+                {% for answer in data.userAnswer %}
+                    <li>{{ answer }}</li>
+                {% endfor %}
+            </ul>
+
+            La/les réponses attendues:
+            <ul>
+                {% for answer in data.correctAnswer %}
+                    <li>{{ answer }}</li>
+                {% endfor %}
+            </ul>
+
+
+        {% endfor %}
 {% endblock %}
